@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Video, RefreshCw } from 'lucide-react';
 import { DOOR_CONSTANTS } from '@/types';
 
-const CCTV_URL = 'https://accessio.nidpro.tech/cctv.jpg';
+const CCTV_URL = process.env.NEXT_PUBLIC_CCTV_URL || 'https://accessio.nidpro.tech/cctv.jpg';
 
 export function CCTVView() {
     const [imageUrl, setImageUrl] = useState<string>('');

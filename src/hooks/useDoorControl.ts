@@ -127,7 +127,7 @@ export function useDoorControl(): UseDoorControlReturn {
     // Determine which buttons can be pressed
     const canOpen = !isMoving && (percentage === null || percentage < 100);
     const canClose = !isMoving && (percentage === null || percentage > 0);
-    const canStop = isMoving;
+    const canStop = true;
 
     return {
         percentage,

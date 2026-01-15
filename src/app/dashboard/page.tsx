@@ -31,6 +31,9 @@ function DashboardContent() {
     const getHeaderText = () => {
         if (doorControl.state === 'OPENING') return 'กำลังเปิดประตู';
         if (doorControl.state === 'CLOSING') return 'กำลังปิดประตู';
+        if (doorControl.state === 'FULLY_OPEN') return 'สถานะ : เปิดประตูแล้ว';
+        if (doorControl.state === 'FULLY_CLOSED') return 'สถานะ : ปิดประตูแล้ว';
+        if (doorControl.state === 'STOPPED') return 'สถานะ : หยุดประตู';
         return 'สถานะ';
     };
 
@@ -108,7 +111,15 @@ function DashboardContent() {
                                 {/* Indicator - สีเปลี่ยนตามสถานะ */}
                                 <circle
                                     cx="50" cy="50" r="42" fill="none"
-                                    stroke={doorControl.state === 'OPENING' ? '#22c55e' : doorControl.state === 'CLOSING' ? '#f97316' : '#9CA3AF'}
+                                    stroke={
+                                        (percentage !== null && (percentage <= 0 || percentage >= 100))
+                                            ? '#9CA3AF'
+                                            : doorControl.state === 'OPENING'
+                                                ? '#22c55e'
+                                                : doorControl.state === 'CLOSING'
+                                                    ? '#f97316'
+                                                    : '#9CA3AF'
+                                    }
                                     strokeWidth="10"
                                     strokeLinecap="round"
                                     strokeDasharray={percentage !== null ? `${percentage * 2.64} 264` : '0 264'}
@@ -116,7 +127,14 @@ function DashboardContent() {
                                 />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <span className={`text-2xl font-bold ${doorControl.state === 'OPENING' ? 'text-green-500' : doorControl.state === 'CLOSING' ? 'text-orange-500' : 'text-gray-600'}`}>
+                                <span className={`text-2xl font-bold ${(percentage !== null && (percentage <= 0 || percentage >= 100))
+                                        ? 'text-gray-600'
+                                        : doorControl.state === 'OPENING'
+                                            ? 'text-green-500'
+                                            : doorControl.state === 'CLOSING'
+                                                ? 'text-orange-500'
+                                                : 'text-gray-600'
+                                    }`}>
                                     {displayPercentage}
                                 </span>
                             </div>
@@ -133,26 +151,31 @@ function DashboardContent() {
                         <button
                             onClick={doorControl.open}
                             disabled={!doorControl.canOpen}
-                            className="w-full h-14 rounded-xl bg-[#2ea44f] text-white font-bold text-xl flex items-center justify-center gap-3 shadow-md hover:bg-[#2c974b] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+                            className={`w-full h-14 rounded-xl font-bold text-xl flex items-center justify-center gap-3 shadow-md transition-all active:scale-[0.98] ${!doorControl.canOpen
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-[#2ea44f] text-white hover:bg-[#2c974b]'
+                                }`}
                         >
                             <ArrowUp className="w-6 h-6 stroke-[3]" />
                             <span>OPEN/เปิด</span>
                         </button>
 
-                        {/* STOP Button (สีแดงเข้ม ไม่มีไอคอน) */}
+                        {/* STOP Button (สีแดงเข้มตลอดเวลา กดได้ตลอด) */}
                         <button
                             onClick={doorControl.stop}
-                            disabled={!doorControl.canStop}
-                            className="w-full h-14 rounded-xl bg-[#ff0000] text-white font-bold text-xl flex items-center justify-center shadow-md hover:bg-[#d90000] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+                            className="w-full h-14 rounded-xl bg-[#ff0000] text-white font-bold text-xl flex items-center justify-center shadow-md hover:bg-[#d90000] active:scale-[0.98] transition-all"
                         >
                             <span>STOP/หยุด</span>
                         </button>
 
-                        {/* CLOSE Button (สีส้ม/เหลือง) */}
+                        {/* CLOSE Button */}
                         <button
                             onClick={doorControl.close}
                             disabled={!doorControl.canClose}
-                            className="w-full h-14 rounded-xl bg-[#ff9900] text-white font-bold text-xl flex items-center justify-center gap-3 shadow-md hover:bg-[#e68a00] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+                            className={`w-full h-14 rounded-xl font-bold text-xl flex items-center justify-center gap-3 shadow-md transition-all active:scale-[0.98] ${!doorControl.canClose
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-[#ff9900] text-white hover:bg-[#e68a00]'
+                                }`}
                         >
                             <ArrowDown className="w-6 h-6 stroke-[3]" />
                             <span>CLOSE/ปิด</span>

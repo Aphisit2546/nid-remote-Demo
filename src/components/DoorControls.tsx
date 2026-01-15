@@ -47,13 +47,12 @@ export function DoorControls({
                 {/* STOP Button */}
                 <Button
                     onClick={onStop}
-                    disabled={!canStop}
                     variant="warning"
                     size="lg"
                     className={cn(
                         'w-full text-lg',
                         canStop && 'animate-pulse-slow',
-                        !canStop && 'opacity-50 cursor-not-allowed'
+                        !canStop && 'bg-gray-300 hover:bg-gray-400 text-gray-700 shadow-none'
                     )}
                 >
                     <Square className="w-5 h-5 mr-2" />
