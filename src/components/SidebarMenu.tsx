@@ -18,12 +18,6 @@ export function SidebarMenu({ isOpen, onClose }: SidebarMenuProps) {
         router.push('/login');
     };
 
-    // handleNavigate is no longer needed for the Link components
-    // const handleNavigate = (path: string) => {
-    //     onClose();
-    //     router.push(path);
-    // };
-
     if (!isOpen) return null;
 
     return (

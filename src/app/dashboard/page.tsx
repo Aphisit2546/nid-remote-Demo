@@ -128,12 +128,12 @@ function DashboardContent() {
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <span className={`text-2xl font-bold ${(percentage !== null && (percentage <= 0 || percentage >= 100))
-                                        ? 'text-gray-600'
-                                        : doorControl.state === 'OPENING'
-                                            ? 'text-green-500'
-                                            : doorControl.state === 'CLOSING'
-                                                ? 'text-orange-500'
-                                                : 'text-gray-600'
+                                    ? 'text-gray-600'
+                                    : doorControl.state === 'OPENING'
+                                        ? 'text-green-500'
+                                        : doorControl.state === 'CLOSING'
+                                            ? 'text-orange-500'
+                                            : 'text-gray-600'
                                     }`}>
                                     {displayPercentage}
                                 </span>
@@ -196,7 +196,8 @@ function CCTVImage() {
     useEffect(() => {
         // ใช้ timestamp เพื่อป้องกัน cache
         const updateImage = () => {
-            setImageUrl(`https://accessio.nidpro.tech/cctv.jpg?t=${Date.now()}`);
+            const cctvUrl = process.env.NEXT_PUBLIC_CCTV_URL || 'https://accessio.nidpro.tech/cctv.jpg';
+            setImageUrl(`${cctvUrl}?t=${Date.now()}`);
         };
 
         updateImage();
