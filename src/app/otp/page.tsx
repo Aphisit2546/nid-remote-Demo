@@ -10,20 +10,20 @@ import { DOOR_CONSTANTS } from '@/types';
 
 export default function OTPPage() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [countdown, setCountdown] = useState<number>(DOOR_CONSTANTS.OTP_EXPIRY_SECONDS);
     const [canResend, setCanResend] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const router = useRouter();
-    const { pendingPhone, login } = useAuth();
+    const { pendingPhone, login, isLoading } = useAuth();
 
-    // Redirect to login if no pending phone
+    // Redirect to login if no pending phone (only after auth is loaded)
     useEffect(() => {
-        if (!pendingPhone) {
-            router.push('/login');
+        if (!isLoading && !pendingPhone) {
+            router.replace('/login');
         }
-    }, [pendingPhone, router]);
+    }, [pendingPhone, isLoading, router]);
 
     // Countdown timer
     useEffect(() => {
@@ -74,32 +74,33 @@ export default function OTPPage() {
         }
 
         if (!pendingPhone) {
-            router.push('/login');
+            router.replace('/login');
             return;
         }
 
-        setIsLoading(true);
+        setIsSubmitting(true);
 
         try {
             const result = await authService.verifyOTP(pendingPhone, otpCode);
 
             if (result.success) {
                 await login(pendingPhone);
-                router.push('/dashboard');
+                // Use replace to prevent back navigation issues
+                router.replace('/dashboard');
             } else {
                 setError(result.message);
             }
         } catch {
             setError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
         } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     }, [otp, pendingPhone, login, router]);
 
     const handleResendOTP = async () => {
         if (!canResend || !pendingPhone) return;
 
-        setIsLoading(true);
+        setIsSubmitting(true);
         setError('');
 
         try {
@@ -111,16 +112,16 @@ export default function OTPPage() {
         } catch {
             setError('ไม่สามารถส่ง OTP ได้');
         } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
 
     // Auto-submit when all digits are filled
     useEffect(() => {
-        if (otp.every(digit => digit !== '') && !isLoading) {
+        if (otp.every(digit => digit !== '') && !isSubmitting && pendingPhone) {
             handleSubmit();
         }
-    }, [otp, isLoading, handleSubmit]);
+    }, [otp, isSubmitting, pendingPhone, handleSubmit]);
 
     const formatPhone = (phone: string) => {
         return '+66 ' + phone.slice(1).replace(/(\d{2})(\d{3})(\d{4})/, '$1 $2 $3');
@@ -132,8 +133,28 @@ export default function OTPPage() {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // Show loading while auth is loading
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-gray-500">กำลังโหลด...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render if no pending phone (will redirect)
     if (!pendingPhone) {
-        return null;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-gray-500">กำลังโหลด...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -154,7 +175,7 @@ export default function OTPPage() {
                 {/* Back Button */}
                 <div className="w-full flex justify-start mb-4">
                     <button
-                        onClick={() => router.push('/login')}
+                        onClick={() => router.replace('/login')}
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/90 backdrop-blur-sm shadow-md hover:bg-white transition-colors"
                     >
                         <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -193,7 +214,7 @@ export default function OTPPage() {
                             value={digit}
                             onChange={(e) => handleInputChange(index, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(index, e)}
-                            disabled={isLoading}
+                            disabled={isSubmitting}
                             className="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold rounded-xl bg-white/80 backdrop-blur-sm border-2 border-blue-400 text-gray-800 focus:border-blue-600 focus:bg-white focus:outline-none transition-all disabled:opacity-50"
                         />
                     ))}
@@ -209,7 +230,7 @@ export default function OTPPage() {
                     {canResend ? (
                         <button
                             onClick={handleResendOTP}
-                            disabled={isLoading}
+                            disabled={isSubmitting}
                             className="text-[#000000] font-medium hover:underline transition-colors disabled:opacity-50"
                         >
                             Send code again
