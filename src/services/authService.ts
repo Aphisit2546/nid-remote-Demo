@@ -1,7 +1,30 @@
 import { OTPSession, DOOR_CONSTANTS } from '@/types';
 
-// Store OTP session in memory (demo only)
-let otpSession: OTPSession | null = null;
+const OTP_SESSION_KEY = 'rolling-shutter-otp-session';
+
+// Helper to get OTP session from sessionStorage
+const getOTPSession = (): OTPSession | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const stored = sessionStorage.getItem(OTP_SESSION_KEY);
+        if (stored) {
+            return JSON.parse(stored) as OTPSession;
+        }
+    } catch {
+        // Ignore parse errors
+    }
+    return null;
+};
+
+// Helper to save OTP session to sessionStorage
+const saveOTPSession = (session: OTPSession | null) => {
+    if (typeof window === 'undefined') return;
+    if (session) {
+        sessionStorage.setItem(OTP_SESSION_KEY, JSON.stringify(session));
+    } else {
+        sessionStorage.removeItem(OTP_SESSION_KEY);
+    }
+};
 
 export const authService = {
     /**
@@ -12,11 +35,12 @@ export const authService = {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Create OTP session
-        otpSession = {
+        // Create OTP session and save to sessionStorage
+        const session: OTPSession = {
             phone,
             expiresAt: Date.now() + (DOOR_CONSTANTS.OTP_EXPIRY_SECONDS * 1000),
         };
+        saveOTPSession(session);
 
         console.log('[Demo] OTP sent to:', phone);
 
@@ -42,6 +66,8 @@ export const authService = {
             };
         }
 
+        const otpSession = getOTPSession();
+
         // Check if session exists
         if (!otpSession) {
             return {
@@ -60,7 +86,7 @@ export const authService = {
 
         // Check if expired
         if (Date.now() > otpSession.expiresAt) {
-            otpSession = null;
+            saveOTPSession(null);
             return {
                 success: false,
                 message: 'OTP หมดอายุแล้ว กรุณาขอใหม่',
@@ -70,7 +96,7 @@ export const authService = {
         console.log('[Demo] OTP verified for:', phone);
 
         // Clear session after successful verification
-        otpSession = null;
+        saveOTPSession(null);
 
         return {
             success: true,
@@ -82,6 +108,7 @@ export const authService = {
      * Get remaining seconds until OTP expires
      */
     getOTPRemainingSeconds: (): number => {
+        const otpSession = getOTPSession();
         if (!otpSession) return 0;
         const remaining = Math.ceil((otpSession.expiresAt - Date.now()) / 1000);
         return Math.max(0, remaining);
@@ -91,6 +118,6 @@ export const authService = {
      * Clear OTP session
      */
     clearOTPSession: () => {
-        otpSession = null;
+        saveOTPSession(null);
     },
 };
